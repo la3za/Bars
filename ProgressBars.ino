@@ -1,5 +1,8 @@
 // Progress bars of various sorts
-// Sverre Holm Nov 2023
+// Sverre Holm Nov/Dec 2023
+//
+// 6 different progress bars
+// 19.12.2023: fixed a couple of small inaccuracies
 //
 
 // Put call required by your LCD here:
@@ -14,7 +17,7 @@ LiquidCrystal_I2C lcd(0x27, 2, 1, 0, 4, 5, 6, 7, 3, POSITIVE);  // Set the LCD I
 
 //#define DEBUG  // for displaying numbers
 
-byte framedBar = 0; // 0;
+byte framedBar = 1; // 0;
 
 //Define LCD character sets  
 ////////////////////////////////////////
@@ -506,7 +509,7 @@ void updateProgressBar(unsigned nr, unsigned total, unsigned firstPos, unsigned 
           lcd.setCursor(j,line); 
  //         lcd.write((char)165);  // dot// lcd.print(" ");
  //       lcd.write((char)219);    // 6x8 square
-            lcd.write(1);          // 8x8 square  
+            lcd.write(1);          // 8x8 square  - same as Sansui DAB radio
         }
     
     // Third: draw closing, right-hand symbol
@@ -536,17 +539,19 @@ void updateProgress3(unsigned nr, unsigned total, unsigned firstPos, unsigned la
 // framed progress bar, every other segment only
 // data is displayed in columns firstPos ... lastPos,
 
+
 {
     firstPos = max(firstPos, 0);        // 1...NCOLS-1, first position with data
     lastPos  = min(lastPos,  NCOLS-1);  // ... NCOLS-1, last position with data
     lastPos  = max(lastPos, firstPos+1); // cannot go right to left!!
-    line     = max(line,0); line = min(line,NROWS);
+    line     = max(line,0); line = min(line,NROWS); // not outside width of LCD
 
     int Nseg = lastPos - firstPos +1 ;  // no of positions to use on LCD (first, ..., last)
-
-    float segmentNoReal = (float(nr)/float(total) )* Nseg;//
+    
+    float noOfSubSegments = 3.0; // no of subsegments used per character
+    float segmentNoReal = (float(nr)/float(total) )* (Nseg-1.0/noOfSubSegments); // 1/segmentNoReal 19.12.2023
     int segmentNoInt    = int(segmentNoReal);
-    byte subSegmentNo   = int(3*(segmentNoReal-segmentNoInt));
+    byte subSegmentNo   = int(noOfSubSegments *(segmentNoReal-segmentNoInt));
 
     // draw on LCD
 
@@ -590,13 +595,16 @@ void updateProgress3(unsigned nr, unsigned total, unsigned firstPos, unsigned la
     {
       lcd.setCursor(firstPos + segmentNoInt, line);                        
       lcd.write(subSegmentNo); // 0, 1, 2 =|::, ||:, |||
+      if (segmentNoInt == Nseg-2) lcd.write(4);           // added 19.12.2023 - only important when counting down
     }
     else if (segmentNoInt == Nseg-1)
     {  // 4 = ::|, 5 = |:|, filled = |||
       lcd.setCursor(firstPos + segmentNoInt, line);
-      if (subSegmentNo == 0) lcd.write(5);      // 
-      if (subSegmentNo == 1) lcd.write(filled); // 
-      if (subSegmentNo == 2) lcd.write(filled); // |||
+      // order 5, filled, filled is correct
+      // order 4, 5, filled misses one beat
+      if (subSegmentNo == 0) lcd.write(5);       // |:|
+      if (subSegmentNo == 1) lcd.write(filled);  // 
+      if (subSegmentNo == 2) lcd.write(filled);  // |||
      }
 
     // debug info on screen
@@ -639,7 +647,8 @@ lcd.setCursor(0,line); lcd.print("                    "); // erase old stuff
   lcd.setCursor(0,0);
   lcd.print("Bar "); lcd.print(framedBar); lcd.print(":");
   
-  for(int i=imax/2; i <= imax; i++)                              // count up
+ for(int i=imax/2; i <= imax; i++)                              // count up
+  //for(int i=0; i <= imax; i++)   
   {
     lcd.setCursor(7,0);
     lcd.print(i);
@@ -650,7 +659,7 @@ lcd.setCursor(0,line); lcd.print("                    "); // erase old stuff
    if (framedBar==1) updateProgress3(i, imax, col1, col2, line);
    if (framedBar==2) updateProgressBar(i, imax, col1, col2, line);   // progress bar. 
    if (framedBar>=3) updateProgressBarFramed(i, imax, col1, col2, line);   // progress bar. 
-   delay(50); 
+   delay(50); // 50 
   }
   delay(1000);
   for(int i=imax; i >= 0; i--)                              // count down
