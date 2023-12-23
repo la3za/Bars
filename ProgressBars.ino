@@ -1,7 +1,11 @@
 // Progress bars of various sorts
-// Sverre Holm Dec 2023, github/la3za
+// counts up and down, and shows that it can also start in arbitrary position on bar
+// uses custom character set for LCD
+// 
+// Sverre Holm December 2023, github/la3za/ProgressBars
 //
 // 9 different progress bars
+// loadGapLessCharacters7() is an example of LCD characters in PROGMEM to save dynamic memory
 //
 
 // Put call required by your LCD here:
@@ -29,19 +33,21 @@ int ibegin;
 byte filled;      
 byte empty;
 
+byte buffer[8];  // temporary storage for PROGMEM characters for loadGapLessCharacters7();
+
 ////////////////////////////////////////////////////////////////////////////
 //Define LCD character sets
 ///////////////////////////////////////////////////////////////////////////////////////////
 
 
 // every other vertical line filled, advantage: space between characters in display are no longer visible
-// only 5 dots high, not the full 8
+// only 6 dots high, not the full 8
 // https://robodoupe.cz/2015/progress-bar-pro-arduino-a-lcd-displej/
 byte g0[8] = {
   B00000,
   B00000,
-  B00000,
   B10101,
+  B10000,
   B10000,
   B10000,
   B10000,
@@ -50,8 +56,8 @@ byte g0[8] = {
 byte g1[8] = {
   B00000,
   B00000,
-  B00000,
   B10101,
+  B10100,
   B10100,
   B10100,
   B10100,
@@ -60,7 +66,7 @@ byte g1[8] = {
 byte g2[8] = {
   B00000,
   B00000,
-  B00000,
+  B10101,
   B10101,
   B10101,
   B10101,
@@ -70,8 +76,8 @@ byte g2[8] = {
 byte g3[8] = {
   B00000,
   B00000,
-  B00000,
   B10101,
+  B00000,
   B00000,
   B00000,
   B00000,
@@ -80,8 +86,8 @@ byte g3[8] = {
 byte g4[8] = {
   B00000,
   B00000,
-  B00000,
   B10101,
+  B00001,
   B00001,
   B00001,
   B00001,
@@ -90,7 +96,7 @@ byte g4[8] = {
 byte g5[8] = {
   B00000,
   B00000,
-  B00000,
+  B10101,
   B10101,
   B10001,
   B10001,
@@ -99,7 +105,7 @@ byte g5[8] = {
 };  //5 |:|
 
 
-void loadGapLessCharacters5() {  // height 5 dots
+void loadGapLessCharacters6() {  // height 6 dots
   lcd.createChar(0, g0);  //0 |::
   lcd.createChar(1, g1);  //1 ||:
   lcd.createChar(2, g2);  //2 |||
@@ -186,81 +192,87 @@ void loadGapLessCharacters8() {  // height 8 dots
   lcd.createChar(5, g85);  //5 |:|
 }
 
-//////////////////////////////////////////////////////////////
-// every other vertical line filled, advantage: space between characters in display are no longer visible
-// only 5 dots high, not the full 8
+// Progress bar with every other vertical line filled, 
+// advantage: space between characters in display are no longer visible
+// only 7 dots high, not the full 8. 
 // https://robodoupe.cz/2015/progress-bar-pro-arduino-a-lcd-displej/
-byte g70[8] = {
-  B00000,
-  B10101,
-  B10000,
-  B10000,
-  B10000,
-  B10000,
-  B10000,
-  B10101
-};  //0 |::
-byte g71[8] = {
-  B00000,
-  B10100,
-  B10100,
-  B10100,
-  B10100,
-  B10100,
-  B10100,
-  B10101
-};  //1 ||:
-byte g72[8] = {
-  B00000,
-  B10101,
-  B10101,
-  B10101,
-  B10101,
-  B10101,
-  B10101,
-  B10101
-};  //2 |||
-byte g73[8] = {
-  B00000,
-  B10101,
-  B00000,
-  B00000,
-  B00000,
-  B00000,
-  B00000,
-  B10101
-};  //3 :::
-byte g74[8] = {
-  B00000,
-  B10101,
-  B00001,
-  B00001,
-  B00001,
-  B00001,
-  B00001,
-  B10101
-};  //4 ::|
-byte g75[8] = {
-  B00000,
-  B10101,
-  B10001,
-  B10001,
-  B10001,
-  B10001,
-  B10001,
-  B10101
-};  //8 |:|
+  const byte g70[8] PROGMEM = {
+    B00000,
+    B10101,
+    B10000,
+    B10000,
+    B10000,
+    B10000,
+    B10000,
+    B10101}; //0 |__ 
+  const byte g71[8] PROGMEM = {
+    B00000,
+    B10101,
+    B10100,
+    B10100, 
+    B10100, 
+    B10100, 
+    B10100, 
+    B10101}; //1 ||_ 
+  const byte g72[8] PROGMEM = {
+    B00000, 
+    B10101,
+    B10101,
+    B10101, 
+    B10101, 
+    B10101, 
+    B10101, 
+    B10101}; //2 ||| 
+  const byte g73[8] PROGMEM = {
+    B00000,
+    B10101,
+    B00000,
+    B00000,
+    B00000, 
+    B00000, 
+    B00000, 
+    B10101}; //3 ___ 
+  const byte g74[8] PROGMEM = {
+    B00000,
+    B10101,
+    B00001,
+    B00001,
+    B00001, 
+    B00001, 
+    B00001, 
+    B10101}; //4 __| 
+  const byte g75[8] PROGMEM = {
+    B00000,
+    B10101,
+    B10001,
+    B10001,
+    B10001, 
+    B10001, 
+    B10001, 
+    B10101}; //5 |_| 
 
-void loadGapLessCharacters7() {  // height 8 dots
-  lcd.createChar(0, g70);  //0 |::
-  lcd.createChar(1, g71);  //1 ||:
-  lcd.createChar(2, g72);  //2 |||
+
+
+//////////////////////////////////////////////////////////
+void loadGapLessCharacters7()
+{
+  memcpy_P(buffer,g70, 8);
+  lcd.createChar(0, buffer);
+  memcpy_P(buffer,g71, 8);
+  lcd.createChar(1, buffer);
+  memcpy_P(buffer,g72, 8);
+  lcd.createChar(2, buffer);
+  memcpy_P(buffer,g73, 8);
+  lcd.createChar(3, buffer);
+  memcpy_P(buffer,g74, 8);
+  lcd.createChar(4, buffer);
+  memcpy_P(buffer,g75, 8);
+  lcd.createChar(5, buffer);
+
   filled = 2;
-  lcd.createChar(3, g73);  //3 :::
   empty = 3;
-  lcd.createChar(4, g74);  //4 ::|
-  lcd.createChar(5, g75);  //5 |:|
 }
+
 
 //////////////////////////////////////////////////////////////
 byte zeroBar[] = {
@@ -799,7 +811,7 @@ void setup() {
 
 ///////////////// L O O P ////////////////////
 
-// Print a number from 0 to 100 & displays the progress bar
+// Prints a number from 0 to 100 & displays the progress bar
 // The loop counts up, pauses  then counts down again.
 void loop() {
   
@@ -808,7 +820,7 @@ void loop() {
   // load character sets
   switch (framedBar) {
     case 0:  loadSimpleBarCharacters();         break;   // =====
-    case 1:  loadGapLessCharacters5();          break;   // -----
+    case 1:  loadGapLessCharacters6();          break;   // -----
     case 2:  loadGapLessCharacters7();          break;
     case 3:  loadGapLessCharacters8();          break;
     case 4:  loadFramedSimpleBarCharacters();   break;  // |===|
