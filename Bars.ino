@@ -1,5 +1,5 @@
 // BARS:
-// Progress bars of various sorts
+// Progress bars of various sorts, moving from left to right
 // counts up and down, and shows that it can also start in arbitrary position on bar
 // uses custom character set for LCD
 // 
@@ -18,21 +18,21 @@ LiquidCrystal_I2C lcd(0x27, 2, 1, 0, 4, 5, 6, 7, 3, POSITIVE);  // Set the LCD I
 #define NCOLS 20  
 #define NROWS 4
 
-//#define DEBUG             // for displaying integer segment and subsegment numbers
-byte framedBar = 0;  
+//#define DEBUG             // debug info: integer segment and subsegment numbers
+byte framedBar = 0;         // initial bar to display
 
 #define LCD_PWM 45          // for backlight (if needed)
 byte backlightVal = 100;    // (0...255) initial backlight value
 
-int imax = 50;             // no of units to show in bar
+int imax = 50;              // no of units to show in bar
 int col1 = 6;  // -99       // first column of bar
 int col2 = 15; // 299       // end of bar
 int line = 0;               // lineno for bar
 boolean flip = true;        // flips start index, ibegin, for bar
 int ibegin;
 
-byte filled;      
-byte empty;
+byte filled;                // address of 'filled' LCD character
+byte empty;                 // address of 'empty' LCD character
 
 byte buffer[8];  // temporary storage for PROGMEM characters for loadGapLessCharacters7();
 
@@ -42,7 +42,7 @@ byte buffer[8];  // temporary storage for PROGMEM characters for loadGapLessChar
 
 
 // every other vertical line filled, advantage: space between characters in display are no longer visible
-// only 6 dots high, not the full 8
+// 6 dots high, not the full 8
 // https://robodoupe.cz/2015/progress-bar-pro-arduino-a-lcd-displej/
 byte g0[8] = {
   B00000,
@@ -119,7 +119,7 @@ void loadGapLessCharacters6() {  // height 6 dots
 
 //////////////////////////////////////////////////////////////
 // every other vertical line filled, advantage: space between characters in display are no longer visible
-// only 5 dots high, not the full 8
+// full height of 8 dots high
 // https://robodoupe.cz/2015/progress-bar-pro-arduino-a-lcd-displej/
 byte g80[8] = {
   B10101,
@@ -195,7 +195,7 @@ void loadGapLessCharacters8() {  // height 8 dots
 
 // Progress bar with every other vertical line filled, 
 // advantage: space between characters in display are no longer visible
-// only 7 dots high, not the full 8. 
+// 7 dots high, not the full 8. 
 // https://robodoupe.cz/2015/progress-bar-pro-arduino-a-lcd-displej/
   const byte g70[8] PROGMEM = {
     B00000,
@@ -251,8 +251,6 @@ void loadGapLessCharacters8() {  // height 8 dots
     B10001, 
     B10001, 
     B10101}; //5 |_| 
-
-
 
 //////////////////////////////////////////////////////////
 void loadGapLessCharacters7()
@@ -844,7 +842,7 @@ void singleCharacterBar(int nr, int total, int firstPos, int lastPos, int line, 
   line = max(line, 0);
   line = min(line, NROWS);
 
-  int Nseg = lastPos - firstPos + 1;  // no of positions to use on LCD (first, last = frame)
+  int Nseg = lastPos - firstPos + 1;  // no of positions to use on LCD 
 
   float segmentNoReal = Nseg * float(nr) / float(total);  //
   int segmentNoInt = int(segmentNoReal);
@@ -889,7 +887,7 @@ void verticalBar(int nr, int total, int firstPos, int line)
 {
   firstPos = max(firstPos, 0);        // 1...NCOLS-1, first position with data
   int lastPos  = firstPos + 7; 
-  lastPos  = min(lastPos, NCOLS - 1);  // ... NCOLS-2, last position with data
+  lastPos  = min(lastPos, NCOLS - 1); 
   line = max(line, 0);
   line = min(line, NROWS);
 
@@ -935,7 +933,7 @@ void setup() {
   pinMode(LCD_PWM, OUTPUT);
   analogWrite(LCD_PWM, backlightVal);
   
-  if (NROWS>2) lcd.setCursor(0,3); lcd.print("github/la3za/Bars ");
+  if (NROWS > 2) lcd.setCursor(0,3); lcd.print("github/la3za/Bars ");
   
   //Serial.begin(115200);
 }
