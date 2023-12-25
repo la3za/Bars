@@ -1,3 +1,4 @@
+// BARS:
 // Progress bars of various sorts
 // counts up and down, and shows that it can also start in arbitrary position on bar
 // uses custom character set for LCD
@@ -23,8 +24,8 @@ byte framedBar = 0;
 #define LCD_PWM 45          // for backlight (if needed)
 byte backlightVal = 100;    // (0...255) initial backlight value
 
-int imax = 100;             // no of units to show in bar
-int col1 = 2;  // -99       // first column of bar
+int imax = 50;             // no of units to show in bar
+int col1 = 6;  // -99       // first column of bar
 int col2 = 15; // 299       // end of bar
 int line = 0;               // lineno for bar
 boolean flip = true;        // flips start index, ibegin, for bar
@@ -543,6 +544,91 @@ void loadSquares() {
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////
+byte vert1[8] = {
+  B00000,
+  B00000,
+  B00000,
+  B00000,
+  B00000,
+  B00000,
+  B00000,
+  B11111
+};
+byte vert2[8] = {
+  B00000,
+  B00000,
+  B00000,
+  B00000,
+  B00000,
+  B00000,
+  B11111,
+  B11111
+};
+byte vert3[8] = {
+  B00000,
+  B00000,
+  B00000,
+  B00000,
+  B00000,
+  B11111,
+  B11111,
+  B11111
+};
+byte vert4[8] = {
+  B00000,
+  B00000,
+  B00000,
+  B00000,
+  B11111,
+  B11111,
+  B11111,
+  B11111
+};
+byte vert5[8] = {
+  B00000,
+  B00000,
+  B00000,
+  B11111,
+  B11111,
+  B11111,
+  B11111,
+  B11111
+};
+byte vert6[8] = {
+  B00000,
+  B00000,
+  B11111,
+  B11111,
+  B11111,
+  B11111,
+  B11111,
+  B11111
+};
+byte vert7[8] = {
+  B00000,
+  B11111,
+  B11111,
+  B11111,
+  B11111,
+  B11111,
+  B11111,
+  B11111
+};
+
+void loadVerticalBarCharacters()
+// vertical lines, thicker and thicker
+{               
+  empty = 254;  
+  filled = 255;
+  lcd.createChar(1, vert1);
+  lcd.createChar(2, vert2);
+  lcd.createChar(3, vert3);
+  lcd.createChar(4, vert4);
+  lcd.createChar(5, vert5);
+  lcd.createChar(6, vert6);
+  lcd.createChar(7, vert7);
+}
+///////////////////////////////////////////////////////////////////////////////////////////
 // Now follows the actual drawing functions
 ///////////////////////////////////////////////////////////////////////////////////////////
 
@@ -795,6 +881,50 @@ void singleCharacterBar(int nr, int total, int firstPos, int lastPos, int line, 
   }
 #endif
 }
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+void verticalBar(int nr, int total, int firstPos, int line)
+// Vertical progressbar in 8 steps
+// data is displayed in columns firstPos ... lastPos = firstPos+7
+
+{
+  firstPos = max(firstPos, 0);        // 1...NCOLS-1, first position with data
+  int lastPos  = firstPos + 7; 
+  lastPos  = min(lastPos, NCOLS - 1);  // ... NCOLS-2, last position with data
+  line = max(line, 0);
+  line = min(line, NROWS);
+
+  int Nseg = lastPos - firstPos + 1;  // no of positions to use on LCD
+
+  float segmentNoReal = Nseg * float(nr) / float(total);  //
+  int segmentNoInt = int(segmentNoReal);
+
+  // draw on LCD
+ 
+  // Draw 0 ... Nseg completely filled segments
+  for (int j = firstPos; j < firstPos + segmentNoInt; j++) {
+    lcd.setCursor(j, line);
+    if (j < firstPos + 7) lcd.write(j-firstPos+1);
+    else                  lcd.write(filled);
+  }
+  // blank out non-used ones
+  for (int j = firstPos+segmentNoInt; j <= lastPos; j++) {
+    lcd.setCursor(j, line);
+    lcd.write(empty);
+  }
+
+// debug info on screen
+#ifdef DEBUG
+  if (line < NROWS) {
+    lcd.setCursor(6, line + 1);
+    lcd.print(segmentNoReal);
+    lcd.print("    ");
+    lcd.setCursor(12, line + 1);
+    lcd.print(segmentNoInt);
+    lcd.print(" ");
+  }
+#endif
+}
+
 
 
 ////////////// S E T U P /////////////////////////////////////////////////////////////////////////////
@@ -804,8 +934,51 @@ void setup() {
   lcd.begin(NCOLS, NROWS);
   pinMode(LCD_PWM, OUTPUT);
   analogWrite(LCD_PWM, backlightVal);
-
+  
+  if (NROWS>2) lcd.setCursor(0,3); lcd.print("github/la3za/Bars ");
+  
   //Serial.begin(115200);
+}
+
+///////////////////////////////////////////////////////////////////////////
+void PrintFixedWidth(Print &out, int number, byte width, char filler = ' ') {
+  int temp = number;
+  //
+  // Sverre Holm 2022
+  // call like this to print number to lcd: PrintFixedWidth(lcd, val, 3);
+  // or for e.g. minutes PrintFixedWidth(lcd, minute, 2, '0')
+  //
+  // Default filler = ' ', can also be set to '0' e.g. for clock
+  // If filler = ' ', it handles negative integers: width = 5 => '   -2'
+  // but not if filler = '0': width = 5 => '000-2'
+  //
+  // https://forum.arduino.cc/t/print-lcd-text-justify-from-right/398351/5
+  // https://forum.arduino.cc/t/u8glib-how-to-display-leading-zeroes/396694/3
+
+  //do we need room for a minus?
+  if (number < 0) {
+    width--;
+  }
+
+  //see how wide the number is
+  if (temp == 0) {
+    width--;
+  }
+  else
+  {
+    while (temp && width) {
+      temp /= 10;
+      width--;
+    }
+  }
+
+  //start by printing the rest of the width with filler symbol
+  while (width) {
+    out.print(filler);
+    width--;
+  }
+
+  out.print(number); // finally print signed number
 }
 
 
@@ -813,8 +986,7 @@ void setup() {
 
 // Prints a number from 0 to 100 & displays the progress bar
 // The loop counts up, pauses  then counts down again.
-void loop() {
-  
+void loop() { 
   lcd.setCursor(0, line); lcd.print("                    ");  // erase old stuff
 
   // load character sets
@@ -826,36 +998,35 @@ void loop() {
     case 4:  loadFramedSimpleBarCharacters();   break;  // |===|
     case 5:  loadCurvedFramedBarCharacters();   break;  // (---) nicest?
     case 6:  loadStraightFramedBarCharacters(); break;  // |---|
+    case 9:  loadVerticalBarCharacters();       break;
     default: loadSquares();                     break;
   }
-
   delay(100);   // to avoid flash
 
-  lcd.setCursor(0, line+1); lcd.print(framedBar);lcd.print(": ");
+  lcd.setCursor(0, line); lcd.print("Bar"); PrintFixedWidth(lcd, framedBar, 2);
 
   if (flip) ibegin = 0;       // first time:  full loop
   else      ibegin = imax/2;  // second time: start at 50%
   
-  lcd.setCursor(2, line+1);lcd.print("  ");
+  lcd.setCursor(1, line+1);lcd.print(" ");
   for (int i = ibegin; i <= imax; i++)  // count up
-  {
-    lcd.setCursor(2, line+1); lcd.print(i); lcd.print(" "); 
+  { 
+    lcd.setCursor(2, line+1); PrintFixedWidth(lcd, i, 3);
     displayBars(i);
     delay(50); // 50
   }
   delay(1000);
-  
-  lcd.setCursor(2, line+1);lcd.print("  ");
+  lcd.setCursor(2, line+1);lcd.print(" ");
   for (int i = imax; i >= 0; i--)  // count down
   {
-    lcd.setCursor(2,line+1); lcd.print(i); lcd.print(" ");
+    lcd.setCursor(2, line+1); PrintFixedWidth(lcd, i, 3);
     displayBars(i);
     delay(50); //50
   }
 
   delay(1000);
   framedBar = framedBar + 1;
-  if (framedBar > 8) { framedBar = 0; flip = !flip; }
+  if (framedBar > 9) { framedBar = 0; flip = !flip; }
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -866,5 +1037,5 @@ void displayBars(int i)
     if (framedBar >= 4 & framedBar <= 6)  framedProgressBar(i, imax, col1, col2, line);  // progress bar.
     if (framedBar == 7)                   singleCharacterBar(i, imax, col1, col2, line, 255, 1); // full height square
     if (framedBar == 8)                   singleCharacterBar(i, imax, col1, col2, line, 2, 219); // reduced height square
-   // if (framedBar == 9)                 singleCharacterBar(i, imax, col1, col2, line, 126, 219); // or '>', 219: not nice
+    if (framedBar == 9)                   verticalBar(i, imax, col1, line);
 }
