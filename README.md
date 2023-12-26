@@ -25,4 +25,4 @@ The main design principle is that no more than 8 custom characters should be req
 
 <img src="Images/Bar9-la3za.jpg" width="40%">
 
-The demonstration program was developed for an Arduino Mega with a 20 x 4 LCD, but runs equally well on any Arduino and a 16 x 2 LCD.
+Bar 2 has its character definitions in PROGMEM in order to save dynamic memory, and was developed for the [Muti face GPS Clock](http://www.github.comla3za/MultifaceGPSClock). The demonstration program was developed for an Arduino Mega with a 20 x 4 LCD, but runs equally well on any Arduino and a 16 x 2 LCD.
