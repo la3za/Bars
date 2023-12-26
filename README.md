@@ -25,3 +25,4 @@ The main design principle is that no more than 8 custom characters should be req
 
 <img src="Images/Bar9-la3za.jpg" width="40%">
 
+the demonstration program was developed for an Arduino Mega wit a 20 x 4 LCD, but runs equally well on any Arduino and a 16 x 2 LCD.
