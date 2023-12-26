@@ -8,6 +8,8 @@
 // 9 different progress bars
 // loadGapLessCharacters7() is an example of LCD characters in PROGMEM to save dynamic memory
 //
+// a couple of character sets are stored in PROGMEM in order to save dynamic memory
+//
 
 // Put call required by your LCD here:
 #include <Wire.h>
@@ -403,7 +405,7 @@ byte end2[] = {
 ///////////////////////////////////////////////
 // completely filled bar:
 //
-byte oneFilled[]{
+const byte oneFilled[8] PROGMEM = {
   B10000,
   B10000,
   B10000,
@@ -414,7 +416,7 @@ byte oneFilled[]{
   B10000
 };
 
-byte twoFilled[]{
+const byte twoFilled[8] PROGMEM = {
   B11000,
   B11000,
   B11000,
@@ -425,7 +427,7 @@ byte twoFilled[]{
   B11000
 };
 
-byte threeFilled[]{
+const byte threeFilled[8] PROGMEM = {
   B11100,
   B11100,
   B11100,
@@ -436,7 +438,7 @@ byte threeFilled[]{
   B11100
 };
 
-byte fourFilled[]{
+const byte fourFilled[8] PROGMEM = {
   B11110,
   B11110,
   B11110,
@@ -450,15 +452,19 @@ byte fourFilled[]{
 void loadSimpleBarCharacters() {
   empty = 254;  // 0;
   filled = 255;
-  //lcd.createChar(empty, zero);
-  lcd.createChar(1, oneFilled);
-  lcd.createChar(2, twoFilled);
-  lcd.createChar(3, threeFilled);
-  lcd.createChar(4, fourFilled);
+  // upload characters to the lcd
+  memcpy_P(buffer,oneFilled, 8);
+  lcd.createChar(1, buffer);
+  memcpy_P(buffer,twoFilled, 8);
+  lcd.createChar(2, buffer);
+  memcpy_P(buffer,threeFilled, 8);
+  lcd.createChar(3, buffer);
+  memcpy_P(buffer,fourFilled, 8);
+  lcd.createChar(4, buffer);
 }
 
 // straight beginning symbol, full height: |xxx|
-byte beg3[] = {
+const byte beg3[8] PROGMEM = {
   B00001,
   B00001,
   B00001,
@@ -468,7 +474,7 @@ byte beg3[] = {
   B00001,
   B00001
 };
-byte end3[] = {
+const byte end3[8] PROGMEM = {
   B10000,
   B10000,
   B10000,
@@ -486,13 +492,20 @@ void loadFramedSimpleBarCharacters()
   empty = 254;  // 0;
   filled = 255;
   //lcd.createChar(empty, zero);
-  lcd.createChar(1, oneFilled);
-  lcd.createChar(2, twoFilled);
-  lcd.createChar(3, threeFilled);
-  lcd.createChar(4, fourFilled);
+  memcpy_P(buffer,oneFilled, 8);
+  lcd.createChar(1, buffer);
+  memcpy_P(buffer,twoFilled, 8);
+  lcd.createChar(2, buffer);
+  memcpy_P(buffer,threeFilled, 8);
+  lcd.createChar(3, buffer);
+  memcpy_P(buffer,fourFilled, 8);
+  lcd.createChar(4, buffer);
+  memcpy_P(buffer,threeFilled, 8);
 
-  lcd.createChar(6, beg3);
-  lcd.createChar(7, end3);
+  memcpy_P(buffer,beg3, 8);
+  lcd.createChar(6, buffer);
+  memcpy_P(buffer,end3, 8);
+  lcd.createChar(7, buffer);
 }
 
 
@@ -506,8 +519,10 @@ void loadStraightFramedBarCharacters() {  // | xxxx |
   lcd.createChar(4, fourBar);
   lcd.createChar(filled, fiveBar);
 
-  lcd.createChar(6, beg3);  // or beg2
-  lcd.createChar(7, end3);
+  memcpy_P(buffer,beg3, 8);
+  lcd.createChar(6, buffer);
+  memcpy_P(buffer,end3, 8);
+  lcd.createChar(7, buffer);
 }
 
 
