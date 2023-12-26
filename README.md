@@ -25,4 +25,4 @@ The different bars implemented:
 
 <img src="Images/Bar9-la3za.jpg" width="40%">
 
-Bar 2 has its character definitions in PROGMEM in order to save dynamic memory, and was developed for the [Multi face GPS Clock](https://github.com/la3za/Multi-Face-GPS-Clock). The demonstration program was developed for an Arduino Mega with a 20 x 4 LCD, but runs equally well on any Arduino and a 16 x 2 LCD.
+Bars 0 and 2 have their character definitions in PROGMEM in order to save dynamic memory. They were developed for the [Multi face GPS Clock](https://github.com/la3za/Multi-Face-GPS-Clock). The demonstration program was developed for an Arduino Mega with a 20 x 4 LCD, but runs equally well on any Arduino and a 16 x 2 LCD.
