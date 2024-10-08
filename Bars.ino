@@ -11,6 +11,10 @@
 // a couple of character sets are stored in PROGMEM in order to save dynamic memory
 //
 
+// 06.10.2024: less flicker in bars 1-3 by modification of gapLessBar().
+
+
+
 // Put call required by your LCD here:
 #include <Wire.h>
 #include <LiquidCrystal_I2C.h>
@@ -23,8 +27,9 @@ LiquidCrystal_I2C lcd(0x27, 2, 1, 0, 4, 5, 6, 7, 3, POSITIVE);  // Set the LCD I
 //#define DEBUG             // debug info: integer segment and subsegment numbers
 byte framedBar = 0;         // initial bar to display
 
-#define LCD_PWM 45          // for backlight (if needed)
-byte backlightVal = 100;    // (0...255) initial backlight value
+#define LCD_PWM 45          // pin for backlight (if needed)
+byte backlightVal = 20;     // (0...255) initial backlight value. 
+                            //value = 20 works fine for photo: Manual f/3.8, 1/5 sec, ISO100
 
 int imax = 50;              // no of units to show in bar
 int col1 = 6;  // -99       // first column of bar
@@ -645,84 +650,101 @@ void loadVerticalBarCharacters()
 // Now follows the actual drawing functions
 ///////////////////////////////////////////////////////////////////////////////////////////
 
-void gapLessBar(int nr, int total, int firstPos, int lastPos, int line)
+void gapLessBar(unsigned nr, unsigned total, unsigned firstPos, unsigned lastPos, unsigned line)
 // https://robodoupe.cz/2015/progress-bar-pro-arduino-a-lcd-displej/
 // framed progress bar, every other segment only, so that gap between characters melts in
-// data is displayed in columns firstPos ... lastPos, 5 dots height
+// data is displayed in columns firstPos ... lastPos
+
 {
-  firstPos = max(firstPos, 0);           // 1...NCOLS-1, first position with data
-  lastPos = min(lastPos, NCOLS - 1);     // ... NCOLS-1, last position with data
-  lastPos = max(lastPos, firstPos + 1);  // cannot go right to left!!
-  line = max(line, 0);
-  line = min(line, NROWS);  // not outside width of LCD
+    firstPos = max(firstPos, 0);        // 1...NCOLS-1, first position with data
+    lastPos  = min(lastPos,  NCOLS-1);  // ... NCOLS-1, last position with data
+    lastPos  = max(lastPos, firstPos+1); // cannot go right to left!!
+    line     = max(line,0); line = min(line,NROWS);
 
-  int Nseg = lastPos - firstPos + 1;  // no of positions to use on LCD (first, ..., last)
+    int Nseg = lastPos - firstPos +1 ;  // no of positions to use on LCD (first, ..., last)
 
-  float noOfSubSegments = 3.0;                                                        // no of subsegments used per character
-  float segmentNoReal = (float(nr) / float(total)) * (Nseg - 1.0 / noOfSubSegments);  // 1/segmentNoReal 19.12.2023
-  int segmentNoInt = int(segmentNoReal);
-  byte subSegmentNo = int(noOfSubSegments * (segmentNoReal - segmentNoInt));
+    float noOfSubSegments = 3.0; // no of subsegments used per character, out of a total of 5, i.e. 2 gaps
+    float segmentNoReal = (float(nr)/float(total) )* (Nseg-1.0/noOfSubSegments); // 1/segmentNoReal 19.12.2023
+    int segmentNoInt    = int(segmentNoReal);
+    byte subSegmentNo   = byte(noOfSubSegments *(segmentNoReal-segmentNoInt));
 
-  // draw on LCD
+    /*
+    Example: 
+    total = 111, firstPos = 0, lastPos = 19 => Nseg = 20
+    
+    nr =   0 => segmentNoReal= 0.0 , segmentNoInt= 0, subSegmentNo=0.
+    nr =   1 => segmentNoReal= 0.18, segmentNoInt= 0, subSegmentNo=0.53 -> 0
+    nr =   2 => segmentNoReal= 0.35, segmentNoInt= 0, subSegmentNo=1.06 -> 1
+    nr =   3 => segmentNoReal= 0.53, segmentNoInt= 0, subSegmentNo=1.59 -> 1
+    nr =   4 => segmentNoReal= 0.71, segmentNoInt= 0, subSegmentNo=2.13 -> 2
+    nr =   5 => segmentNoReal= 0.89, segmentNoInt= 0, subSegmentNo=2.65 -> 2
 
-  // 1: left-hand symbol
-  lcd.setCursor(firstPos, line);
-  if (segmentNoInt == 0) lcd.write(byte(0));  // initial left-hand symbol, |::
-  else lcd.write(filled);                     // filled,                   |||
+    nr =   6 => segmentNoReal= 1.06, segmentNoInt= 1, subSegmentNo=0.19 -> 0
 
-  // 2: upper and lower frame :::
-  {
-    for (int j = firstPos + segmentNoInt; j < lastPos; j++)  //
+    nr = 111 => segmentNoReal=19.67, segmentNoInt=19, subSegmentNo=2
+
+    */
+
+    // draw on LCD
+
+    // 1: left-hand symbol
+    lcd.setCursor(firstPos, line);
+    if (segmentNoInt == 0) lcd.write(byte(0)); // initial left-hand symbol, |::
+    else                   lcd.write(filled);  // filled,                   |||
+    
+    // 2: upper and lower frame, after actual segment :::
+     {  
+     for (int j = firstPos + segmentNoInt + 1; j < lastPos; j++) // 8.10.2024: +1 added - removes flickering 
+       {
+         lcd.setCursor(j,line);lcd.write(empty);  // :::
+       }
+     }
+ 
+    // 3: draw 0 ... Nseg completely filled segments
+
+    int jmax = firstPos + segmentNoInt ;
+    for (int j = firstPos+1; j < jmax; j++)
+      {
+       // if (j>0)
+        {
+        // #ifdef DEBUG
+        //   lcd.setCursor(0,3); lcd.print(j);lcd.print(" "); 
+        //   lcd.setCursor(6,3); lcd.print(segmentNoInt);lcd.print(" ");
+        //   lcd.print(firstPos);lcd.print(" ");lcd.print(lastPos);lcd.print(" ");
+        // #endif
+        lcd.setCursor(j, line); lcd.write(filled);
+        }
+      }
+
+     // 4: draw closing, right-hand symbol
+    if (segmentNoInt < Nseg-2) 
     {
-      lcd.setCursor(j, line);
-      lcd.write(empty);  // :::
+      lcd.setCursor(lastPos,line); lcd.write(byte(4)); // ::|, final   symbol  
     }
-  }
 
-  // 3: draw 0 ... Nseg completely filled segments
-
-  int jmax = firstPos + segmentNoInt;
-  for (int j = firstPos + 1; j < jmax; j++) {
+    // 5 draw sub segment
+    if (segmentNoInt < Nseg-1)  // nothing if final segment has been filled
     {
-      lcd.setCursor(j, line);
-      lcd.write(filled);
+      lcd.setCursor(firstPos + segmentNoInt, line);                        
+      lcd.write(subSegmentNo); // 0, 1, 2 =|::, ||:, |||
+      if (segmentNoInt == Nseg-2) lcd.write(4);           // added 19.12.2023 - only important when counting down. = end-character
     }
-  }
+    else if (segmentNoInt == Nseg-1)
+    {  // 4 = ::|, 5 = |:|, filled = |||
+      lcd.setCursor(firstPos + segmentNoInt, line);
+      if (subSegmentNo == 0) lcd.write(5);      // |__|
+      if (subSegmentNo == 1) lcd.write(filled); // 
+      if (subSegmentNo == 2) lcd.write(filled); // |||
+     }
 
-  // 4: draw closing, right-hand symbol
-  if (segmentNoInt < Nseg - 2) {
-    lcd.setCursor(lastPos, line);
-    lcd.write(byte(4));  // ::|, final   symbol
-  }
-
-  // 5 draw sub segment
-  if (segmentNoInt < Nseg - 1)  // nothing if final segment has been filled
-  {
-    lcd.setCursor(firstPos + segmentNoInt, line);
-    lcd.write(subSegmentNo);                     // 0, 1, 2 =|::, ||:, |||
-    if (segmentNoInt == Nseg - 2) lcd.write(4);  // added 19.12.2023 - only important when counting down
-  } else if (segmentNoInt == Nseg - 1) {         // 4 = ::|, 5 = |:|, filled = |||
-    lcd.setCursor(firstPos + segmentNoInt, line);
-    // order 5, filled, filled is correct
-    // order 4, 5, filled misses one beat
-    if (subSegmentNo == 0) lcd.write(5);       // |:|
-    if (subSegmentNo == 1) lcd.write(filled);  //
-    if (subSegmentNo == 2) lcd.write(filled);  // |||
-  }
-
-// debug info on screen
-#ifdef DEBUG
-  if (line < NROWS) {
-    lcd.setCursor(6, line+1);
-    lcd.print(segmentNoReal);
-    lcd.print("    ");
-    lcd.setCursor(12, line+1);
-    lcd.print(segmentNoInt);
-    lcd.print(" ");
-    lcd.print(subSegmentNo);
-    lcd.print("      ");
-  }
-#endif
+    // debug info on screen
+    #ifdef DEBUG
+      if (line < NROWS)
+      {
+        lcd.setCursor(firstPos,line+1); lcd.print(segmentNoReal); lcd.print(F("    "));
+        lcd.setCursor(firstPos+6,line+1); lcd.print(segmentNoInt); lcd.print(" ");lcd.print(subSegmentNo);lcd.print(F("      "));
+      }
+    #endif
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////
