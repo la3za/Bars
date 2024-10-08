@@ -668,6 +668,8 @@ void gapLessBar(unsigned nr, unsigned total, unsigned firstPos, unsigned lastPos
     int segmentNoInt    = int(segmentNoReal);
     byte subSegmentNo   = byte(noOfSubSegments *(segmentNoReal-segmentNoInt));
 
+    int startPos;
+
     /*
     Example: 
     total = 111, firstPos = 0, lastPos = 19 => Nseg = 20
@@ -689,17 +691,26 @@ void gapLessBar(unsigned nr, unsigned total, unsigned firstPos, unsigned lastPos
 
     // 1: left-hand symbol
     lcd.setCursor(firstPos, line);
-    if (segmentNoInt == 0) lcd.write(byte(0)); // initial left-hand symbol, |::
-    else                   lcd.write(filled);  // filled,                   |||
+    if (segmentNoInt == 0) 
+    {
+        lcd.write(byte(0)); // initial left-hand symbol, |::
+        startPos = firstPos + segmentNoInt;
+    }
+    else 
+    {
+        lcd.write(filled);  // filled,                   |||
+        startPos = firstPos + segmentNoInt + 1;   // +1 added - removes flickering
+    }
     
     // 2: upper and lower frame, after actual segment :::
      {  
-     for (int j = firstPos + segmentNoInt + 1; j < lastPos; j++) // 8.10.2024: +1 added - removes flickering 
+
+     for (int j = startPos ; j < lastPos; j++) // 8.10.2024:  
        {
          lcd.setCursor(j,line);lcd.write(empty);  // :::
        }
      }
- 
+     
     // 3: draw 0 ... Nseg completely filled segments
 
     int jmax = firstPos + segmentNoInt ;
