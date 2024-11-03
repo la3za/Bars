@@ -3,9 +3,9 @@
 // counts up and down, and shows that it can also start in arbitrary position on bar
 // uses custom character set for LCD
 // 
-// Sverre Holm December 2023, github/la3za/ProgressBars
+// Sverre Holm December 2023, github/la3za/Bars
 //
-// 9 different progress bars
+// 10 different progress bars
 // loadGapLessCharacters7() is an example of LCD characters in PROGMEM to save dynamic memory
 //
 // Some character sets are stored in PROGMEM in order to save dynamic memory
