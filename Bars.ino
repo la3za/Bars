@@ -8,7 +8,7 @@
 // 9 different progress bars
 // loadGapLessCharacters7() is an example of LCD characters in PROGMEM to save dynamic memory
 //
-// a couple of character sets are stored in PROGMEM in order to save dynamic memory
+// Some character sets are stored in PROGMEM in order to save dynamic memory
 //
 // 17.12.2023: First version
 // 06.10.2024: Less flicker in bars 1-3 by modification of gapLessBar().
@@ -26,7 +26,7 @@ LiquidCrystal_I2C lcd(0x27, 2, 1, 0, 4, 5, 6, 7, 3, POSITIVE);  // Set the LCD I
 
 #include "Definitions.h"  // character set definitions
 
-#define DEBUG             // debug info: integer segment and subsegment numbers
+//#define DEBUG             // debug info: integer segment and subsegment numbers
 //#define SLOW              // slow speed for debug   
 
 byte framedBar = 0;         // initial bar to display (usually 0)
