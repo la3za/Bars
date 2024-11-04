@@ -19,6 +19,8 @@ The different bars implemented:
 
 <img src="Images/Bar6-la3za.jpg" width="40%">
 
+Bars 7, 8, and 9 only show discrete steps equal to one cell in the LCD:
+
 <img src="Images/Bar7-la3za.jpg" width="40%">
 
 <img src="Images/Bar8-la3za.jpg" width="40%">
